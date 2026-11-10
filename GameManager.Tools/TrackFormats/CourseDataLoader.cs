@@ -8,7 +8,11 @@ public sealed record CourseData(
     KmpCheckpointGraph Checkpoints,
     BrresModelReader.DecodeResult? Model,
     LexDocument? Lex,
-    IReadOnlyCollection<string> ArchiveFiles);
+    IReadOnlyCollection<string> ArchiveFiles)
+{
+    /// <summary>Optional collision data; null when the archive has no course.kcl.</summary>
+    public KclDocument? Kcl { get; init; }
+}
 
 public static class CourseDataLoader
 {
@@ -23,7 +27,9 @@ public static class CourseDataLoader
             ? LexFileReader.Read(archive.ReadFile("course.lex")) : null;
         BrresModelReader.DecodeResult? model = archive.ContainsFile("course_model.brres")
             ? BrresModelReader.Decode(archive.ReadFile("course_model.brres"), brresMode) : null;
-        return new CourseData(kmp, checkpoints, model, lex, archive.FileNames);
+        KclDocument? kcl = archive.ContainsFile("course.kcl")
+            ? KclFileReader.Read(archive.ReadFile("course.kcl")) : null;
+        return new CourseData(kmp, checkpoints, model, lex, archive.FileNames) { Kcl = kcl };
     }
 
     public static CourseData OpenFile(string path, BrresImportMode brresMode = BrresImportMode.GeometryOnly)
